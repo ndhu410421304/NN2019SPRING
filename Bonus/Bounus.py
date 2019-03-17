@@ -41,10 +41,10 @@ for t in range(49): #could adjust time looping
         b.grad.zero_()
         
 for t in range(99):
-    testy[t] = w1*testx[t]*testx[t]+w2*testx[t]+b
+    testy[t] = w1*testx[t]*testx[t]+w2*testx[t]+b # calculate result
 
 output = pd.DataFrame({"Id": range(1,len(testy)+1), "Expected": testy})
-output.to_csv("nnbonus1410421304.csv", columns=["Id", "Expected"], index=False)
+output.to_csv("nnbonus1410421304.csv", columns=["Id", "Expected"], index=False) #output result to csv
 
 print(w1) #check result
 print(w2)
