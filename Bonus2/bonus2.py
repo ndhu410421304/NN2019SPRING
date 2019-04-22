@@ -84,8 +84,8 @@ class NetWork(nn.Module):
 	def forward(self, x):
 		hid_out1 = F.relu(self.linear1(x))
 		hid_out2 = F.relu(self.linear2(hid_out1))
-		hid_out3 = F.relu(self.linear2(hid_out2))
-		out = self.linear3(hid_out3)
+		hid_out3 = F.relu(self.linear3(hid_out2))
+		out = self.linear4(hid_out3)
 		prob = F.softmax(out, dim=1)
 		return out
 
