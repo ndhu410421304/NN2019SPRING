@@ -30,7 +30,7 @@ hid_size = 35
 num_classes = 3
 num_epochs = 250
 batch_size = 300
-learning_rate = 0.001
+learning_rate = 0.01
 
 class train_dataset(data.Dataset):
     def __init__(self, filename):
