@@ -28,7 +28,7 @@ testy = testcsv['x1'].to_numpy()
 input_size = 2
 hid_size = 35
 num_classes = 3
-num_epochs = 10
+num_epochs = 250
 batch_size = 300
 learning_rate = 0.001
 
@@ -97,6 +97,11 @@ for epoch in range(num_epochs):
 		loss = criterion(outputs,labels.view(-1))
 		loss.backward()
 		optimizer.step()
+		
+		if (i+1) % 4 == 0:
+			correct = torch.sum(torch.argmax(outputs,dim=1)==labels) # count the correct classification
+			print ('Epoch: [%d/%d], Batch: [%d/%d], Loss: %.4f, Accuracy: %.2f'
+					% (epoch+1, num_epochs, i+1, len(traindata)//batch_size, loss.item(), correct.item()/batch_size))
 
 with torch.no_grad(): # disable auto-grad
 	for i, (data) in enumerate(test_loader):
