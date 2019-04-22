@@ -26,36 +26,37 @@ testx2 = torch.from_numpy(testx2array)
 testy = testcsv['x1'].to_numpy()
 
 input_size = 2
-hid_size = 35
+hid_size1 = 35
+hid_size2 = 35
 num_classes = 3
 num_epochs = 250
 batch_size = 300
 learning_rate = 0.01
 
 class train_dataset(data.Dataset):
-    def __init__(self, filename):
-        pd_data = pd.read_csv(filename).values
-        self.data = pd_data[:,0:2]
-        self.label = pd_data[:,2:]
-        self.length = self.data.shape[0]
+	def __init__(self, filename):
+		pd_data = pd.read_csv(filename).values
+		self.data = pd_data[:,0:2]
+		self.label = pd_data[:,2:]
+		self.length = self.data.shape[0]
     
-    def __len__(self):
-        return self.length
+	def __len__(self):
+		return self.length
     
-    def __getitem__(self, index):
-        return torch.Tensor(self.data[index]), torch.Tensor(self.label[index])
+	def __getitem__(self, index):
+		return torch.Tensor(self.data[index]), torch.Tensor(self.label[index])
 
 class test_dataset(data.Dataset):
-    def __init__(self, filename):
-        pd_data = pd.read_csv(filename).values
-        self.data = pd_data[:,0:2] 
-        self.length = self.data.shape[0]
+	def __init__(self, filename):
+		pd_data = pd.read_csv(filename).values
+		self.data = pd_data[:,0:2] 
+		self.length = self.data.shape[0]
     
-    def __len__(self):
-        return self.length
+	def __len__(self):
+		return self.length
     
-    def __getitem__(self, index):
-        return torch.Tensor(self.data[index])
+	def __getitem__(self, index):
+		return torch.Tensor(self.data[index])
 
 traindata = train_dataset('train_data.csv')
 trainloader = data.DataLoader(traindata,batch_size=300,num_workers=0)
@@ -72,18 +73,20 @@ test_loader = torch.utils.data.DataLoader(dataset=testdata,
                                           shuffle=False)
 										  
 class NetWork(nn.Module):
-    def __init__(self, input_size, hid_size, num_classes):
-        super(NetWork, self).__init__()
-        self.linear1 = nn.Linear(input_size, hid_size)
-        self.linear2 = nn.Linear(hid_size, num_classes)
+	def __init__(self, input_size, hid_size1, hid_size2, num_classes):
+		super(NetWork, self).__init__()
+		self.linear1 = nn.Linear(input_size, hid_size1)
+		self.linear2 = nn.Linear(hid_size1, hid_size2)
+		self.linear3 = nn.Linear(hid_size2, num_classes)
     
-    def forward(self, x):
-        hid_out = F.relu(self.linear1(x))
-        out = self.linear2(hid_out)
-        prob = F.softmax(out, dim=1)
-        return out
+	def forward(self, x):
+		hid_out1 = F.relu(self.linear1(x))
+		hid_out2 = F.relu(self.linear2(hid_out1))
+		out = self.linear3(hid_out2)
+		prob = F.softmax(out, dim=1)
+		return out
 
-model2 = NetWork(input_size, hid_size, num_classes)
+model2 = NetWork(input_size, hid_size1, hid_size2, num_classes)
 criterion = nn.CrossEntropyLoss() 
 optimizer = torch.optim.Adam(model2.parameters(), lr=learning_rate)
 
