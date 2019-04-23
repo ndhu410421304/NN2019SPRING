@@ -27,8 +27,8 @@ testy = testcsv['x1'].to_numpy()
 
 input_size = 2
 hid_size1 = 20
-hid_size2 = 45
-hid_size3 = 30
+hid_size2 = 20
+hid_size3 = 20
 num_classes = 3
 num_epochs = 250
 batch_size = 300
@@ -60,22 +60,21 @@ class test_dataset(data.Dataset):
 		return torch.Tensor(self.data[index])
 
 traindata = train_dataset('train_data.csv')
-trainloader = data.DataLoader(traindata,batch_size=300,num_workers=0)
 
 testdata = test_dataset('test_data.csv')
 testloader = data.DataLoader(testdata,batch_size=300,num_workers=0)
 
-train_loader = torch.utils.data.DataLoader(dataset=traindata, 
-                                           batch_size=batch_size, 
-                                           shuffle=True)
+trainsplitsize = int(0.75 * len(traindata))
+validsplitsize = len(traindata) - trainsplitsize
+trainsplit, validsplit = torch.utils.data.random_split(traindata, [trainsplitsize, validsplitsize])
 
-test_loader = torch.utils.data.DataLoader(dataset=testdata, 
-                                          batch_size=batch_size, 
-                                          shuffle=False)
+trainsplitloader = data.DataLoader(trainsplit, batch_size=300)
+validsplitloader = data.DataLoader(validsplit, batch_size=300)
 										  
 class NetWork(nn.Module):
 	def __init__(self, input_size, hid_size1, hid_size2, hid_size3, num_classes):
 		super(NetWork, self).__init__()
+		self.d = nn.Dropout(p=0.1)
 		self.linear1 = nn.Linear(input_size, hid_size1)
 		self.linear2 = nn.Linear(hid_size1, hid_size2)
 		self.linear3 = nn.Linear(hid_size2, hid_size3)
@@ -83,8 +82,11 @@ class NetWork(nn.Module):
     
 	def forward(self, x):
 		hid_out1 = F.relu(self.linear1(x))
+		hid_out1 = self.d(hid_out1)
 		hid_out2 = F.relu(self.linear2(hid_out1))
+		hid_out2 = self.d(hid_out2)
 		hid_out3 = F.relu(self.linear3(hid_out2))
+		hid_out3 = self.d(hid_out3)
 		out = self.linear4(hid_out3)
 		prob = F.softmax(out, dim=1)
 		return out
@@ -94,7 +96,10 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model2.parameters(), lr=learning_rate)
 
 for epoch in range(num_epochs):
-	for i, (data, label) in enumerate(train_loader):
+	for i, (data, label) in enumerate(trainsplitloader):
+		
+		trainloss, validloss = [], []
+		
 		data = Variable(data,requires_grad=False)
 		labels = Variable(label.long(),requires_grad=False)
 		
@@ -104,13 +109,20 @@ for epoch in range(num_epochs):
 		loss.backward()
 		optimizer.step()
 		
-		if (i+1) % 4 == 0:
+		trainloss.append(loss.item())
+		
+		model2.eval()
+		for data, label in validsplitloader:
+			outputs = model2(data)
+			loss = criterion(outputs,labels.view(-1))
+			validloss.append(loss.item())
+		if (i) % 3 == 0:
 			correct = torch.sum(torch.argmax(outputs,dim=1)==labels) # count the correct classification
-			print ('Epoch: [%d/%d], Batch: [%d/%d], Loss: %.4f, Accuracy: %.2f'
-					% (epoch+1, num_epochs, i+1, len(traindata)//batch_size, loss.item(), correct.item()/batch_size))
+			print ('Epoch: [%d/%d], Loss: %.4f, Valid_Loss: %.4f Accuracy: %.2f'
+					% (epoch+1, num_epochs, np.mean(trainloss), np.mean(validloss), (correct.item())/batch_size))
 
 with torch.no_grad(): # disable auto-grad
-	for i, (data) in enumerate(test_loader):
+	for i, (data) in enumerate(testloader):
 		data = Variable(data,requires_grad=False)
 		
 		outputs = model2(data)
