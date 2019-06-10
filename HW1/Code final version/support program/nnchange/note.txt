@@ -1,0 +1,6 @@
+after every submit,
+rename filename with number,
+change total data count,
+and add accuracy to array
+to generate a new acc file
+currently 151 files, so should start on 152.
